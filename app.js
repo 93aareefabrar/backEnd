@@ -1,40 +1,28 @@
-// server.js
 
-// Replace with your stripe public and secret keys
-const keyPublishable = 'pk_test_J0wFOYMrJQQsLv874nTFU9AT';
-const keySecret = 'sk_test_CjKEZXwArbb1Jy1Yi05B8XqC';
+// MASHRUK STRIPE TEST KEY: pk_test_J0wFOYMrJQQsLv874nTFU9AT
+// MASHRUK STRIPE SECRET KEY: sk_test_CjKEZXwArbb1Jy1Yi05B8XqC
 
-// MASH STRIPE TEST KEY: pk_test_J0wFOYMrJQQsLv874nTFU9AT
-// MASH STRIPE SECRET KEY: sk_test_CjKEZXwArbb1Jy1Yi05B8XqC
-
-// ONI STRIPE TEST KEY: pk_test_fseQvgioTBYVkqdlm4lTlczl
-// ONI STRIPE SECRET KEY: sk_test_4nIvshjRjLIcWVpXard0woJQ
-
-
-const app = require("express")();
-const stripe = require("stripe")("sk_test_CjKEZXwArbb1Jy1Yi05B8XqC");
-const pug = require('pug');
-const path = require('path');
-const cors = require('cors')
-const firebase = require("firebase-admin");
+const app        = require("express")();
+const stripe     = require("stripe")("sk_test_CjKEZXwArbb1Jy1Yi05B8XqC");
+const pug        = require('pug');
+const cors       = require('cors');
+const firebase   = require("firebase-admin");
 const bodyParser = require('body-parser');
 
-var id = null;
-var name = null;
-var email = null;
-var ip = null;
-
-var id_get = null;
-var name_get = null;
+var id        = null;
+var name      = null;
+var email     = null;
+var ip        = null;
+var id_get    = null;
+var name_get  = null;
 var email_get = null;
-var ip_get = null;
+var ip_get    = null;
 
 app.use(cors());
 
 // Body Parser Middleware
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(bodyParser.urlencoded({extended:true}));
 
 // *********FIREBASE AUTHENTICATION*************//
 
@@ -49,74 +37,45 @@ firebase.initializeApp({
 var admin = require("firebase-admin");
 
 // Get a database reference to our blog
-var db = admin.database();
+var db  = admin.database();
 var ref = db.ref("stripe_database");
 
 ref.once("value", function (snapshot) {
-    console.log(snapshot.val());
+  console.log("*************************** INSIDE FIREBASE *******************************************");
+  console.log(snapshot.val());
+  console.log("*************************** INSIDE FIREBASE *******************************************");
 });
-
-
-/*app.get('/', (req, res) => {
-  res.send("GET IS WORKING");
-});*/
-
-//********************************//
 
 app.post('/charge', (req, res) => {
-    //res.send("POST IS WORKING");
-    console.log(req.body);
-    //console.log(JSON.stringify(req));
-    const amount = 7200;
 
-    //const event_json = JSON.parse(req.body);
-    //console.log(event_json);
+          stripe.customers.create({
+            email: req.body.email
+          }).then(function(customer){
+            return stripe.customers.createSource(customer.id, {
+              source: 'tok_visa'
+            });
+          }).then(function(source) {
+            return stripe.charges.create({
+              amount: 2500,
+              currency: 'usd',
+              customer: source.customer
+            });
+          }).then(function(charge) {
+            console.log("Customer created and Charged")
+          }).catch(function(err) {
+            console.log("Error Found") 
+          });
 
-
-    //*** TOKEN RETRIEVE ***//
-
-    /*
-                         stripe.tokens.retrieve(req.body, function(err, token) 
-                          {   
-                              // STEP 1
-                              console.log(token); 
-    
-                              // STEP 2
-                              stripe.customers.create({
-                                   email: req.body.stripeEmail,
-                                   source: req.body.stripeToken
-                                })
-                            .then(customer => stripe.charges.create({
-                                  amount: amount,
-                                  description: 'Avengers',
-                                  currency: 'usd',
-                                  customer: customer.id
-                                }));
-    
-                            // STEP 3
-    
-    
-                          });
-                       //  res.render('index');
-    
-                       */
+    var creators = ref.child("DEMO");
+    creators.push({
+    CustomerCall:
+    {
+      id          : req.body.token.id,
+      email       : req.body.email
+    }
 });
-
-
-// set view files directory as views
-app.set('views', path.join(__dirname, 'views'));
-// set view engine as pug
-app.set('view engine', 'pug')
-
-// GET http://localhost:3000/
-app.get("/", ((req, res) => {
-    res.render("index"); // render the view file : views/index.pug
-}));
-
-// ******************** FRONT END CODES ***********************//
-
-
-
+});
+ 
 // app listening on port 3000
 app.listen(3000, () => {
     console.log(`App is running at: http://localhost:3000/`);
